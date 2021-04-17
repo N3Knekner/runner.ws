@@ -1,0 +1,29 @@
+{
+  "name": "runner.ws",
+  "version": "1.0.0",
+  "description": "Server WebSocket based for Runner.io project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./tests.js"
+  },
+  "keywords": [
+    "Server",
+    "WebSocket",
+    "Runner.io"
+  ],
+  "author": "N3Kner_",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-ws": "^4.0.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/N3Knekner/projectRunner.server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/N3Knekner/projectRunner.server/issues"
+  },
+  "homepage": "https://github.com/N3Knekner/projectRunner.server#readme"
+}
