@@ -18,7 +18,8 @@
   "dependencies": {
     "esm": "^3.2.25",
     "express": "^4.17.1",
-    "express-ws": "^4.0.0"
+    "express-ws": "^4.0.0",
+    "steamapi": "^2.1.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.7",
@@ -29,10 +30,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/N3Knekner/projectRunner.server.git"
+    "url": "git+ssh://git@github.com/N3Knekner/runner.ws.git"
   },
   "bugs": {
-    "url": "https://github.com/N3Knekner/projectRunner.server/issues"
+    "url": "https://github.com/N3Knekner/runner.ws/issues"
   },
-  "homepage": "https://github.com/N3Knekner/projectRunner.server#readme"
+  "homepage": "https://github.com/N3Knekner/runner.ws#readme"
 }

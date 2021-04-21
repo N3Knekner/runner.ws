@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <title>Server Manager</title>
+    <style>
+        body {
+            color: white;
+            background-color: #1E1F1C;
+            font-family: "Segoe UI", "Consolas";
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .panel {
+            background-color: rgb(39, 40, 34);
+            height: 85vh;
+        }
+
+        .photo {
+            background-color: cyan;
+        }
+    </style>
+</head>
+
+<body class="m-4">
+    <!-- <script>
+        Lock();
+        function Lock() {
+            if (prompt("Password: ") !== "asdasd")Lock();
+        }
+    </script> -->
+    <center class="">
+        <h1 class="font-bold text-2xl">RUNNER.WS</h1>
+        <h2 class="text-xl">Control Panel</h2>
+    </center>
+    <div class="flex flex-row flex-grow flex-shrink">
+        <div class="flex-1 flex-col rounded m-2 p-2 panel">
+            <div class="flex flex-row justify-center pb-2">
+                <h2 class="text-xl">Map</h2>
+            </div>
+            <hr>
+        </div>
+        <div class="flex-1 flex-col rounded m-2 p-2 panel">
+            <div class="flex flex-row justify-center pb-2">
+                <h2 class="text-xl">Players</h2>
+            </div>
+            <hr>
+            <div class="max-h-full my-2 overflow-x-hidden overflow-y-auto">
+                <div class="flex flex-row p-2" id="player-template" style="display: none!important;">
+                    <a class="w-16 h-16 bg-purple-500 bg-contain thumb" target="_blank" rel="noopener noreferrer" href="#"></a>
+                    <div class="flex flex-row flex-grow mx-2">
+                        <div class="flex flex-col">
+                            <h3 class="name">Name</h3>
+                            <p class="class text-sm">Class</p>
+                            <p class="skills text-sm">Cooldown</p>
+                        </div>
+                        <div class="flex flex-col flex-grow mx-4">
+                            <h3 class="self-end status">Status</h3>
+                            <p class="self-end coords text-sm">Coords</p>
+                            <p class="self-end animation text-sm">Animation</p>
+                        </div>
+                        <div class="flex flex-col flex-grow-0 justify-between">
+                            <button class="rounded bg-red-500 hover:bg-red-600 text-base w-7 h-7" title="KICK OUT / BAN">🚨</button>
+                            <button class="rounded bg-yellow-500 hover:bg-yellow-600 text-base w-7 h-7" title="MODIFY / HACKS!">🛠</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 flex-col rounded m-2 p-2 panel">
+            <div class="flex flex-row justify-center pb-2">
+                <h2 class="text-xl">Console</h2>
+            </div>
+            <hr>
+            <div class="flex flex-row justify-center">
+                <p class="text-base">Console</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ActionsManager{
+            constructor(){
+                this._actions = [];
+            }
+            notify(trigger = "string", ...msg){
+                if (typeof this._actions[trigger] == undefined) return;
+                this._actions[trigger](...msg);
+            }
+            on(trigger = "string", callback = (...msg) => { }){
+                this._actions[trigger] = callback;
+            }
+        }
+    </script>
+
+    <script>
+        const flags = {
+            LOGIN:"?",
+            ADMIN:"!",
+            UPDATE:"1",
+            UPDATE_UI:"2",
+            RESPONSE:"3",
+            SYNCHRONIZE:"4",
+        }
+    </script>
+
+    <script>
+        var template = document.getElementById("player-template");
+        var players = [template];
+
+        const _res = new ActionsManager();
+        const _msg = new ActionsManager();
+
+        var ws = new WebSocket("ws://localhost:3001");
+        console.log("object");
+        ws.onopen = function(e){
+            ws.send("?|admin");
+        }
+        ws.onmessage = function(msg){
+            console.log(msg.data);
+            const data = msg.data.split("|");
+            _msg.notify(data[0],data[1]);
+        }
+        ws.onclose=()=>{alert("LOST CONNECTION!");}
+
+        const tws = {
+            _timeout: [],
+            request: (msg = "1|test:2")=>{
+                ws.send(msg);
+                const id = msg.split("|")[1].split(":")[0];
+                tws._timeout[id] = setTimeout(() =>{ 
+                    clearTimeout(tws._timeout[id]);
+                    console.error("Request "+id+" timed out!");
+                }, 5000);
+            },
+            notify: (msg = "test:2")=>{
+                const id = msg.split(":")[0];
+                clearTimeout(tws._timeout[id]);
+            }
+        }
+        
+        _msg.on(flags.LOGIN, (msg) => {
+            const data = msg.split(":");
+            if (data[0] === "reconnection" && data[1] === "success") {
+                tws.request("!|requestPlayersList");
+            }
+        });
+
+        _msg.on(flags.RESPONSE,(msg)=>{
+            const data = msg.split(":",1);
+            const data2 = msg.slice(msg.indexOf(":")+1);
+            _res.notify(data[0],data2);
+        });
+
+        _res.on('requestPlayersList',(msg)=>{
+            tws.notify("requestPlayersList");
+            drawPlayers(JSON.parse(msg));
+        });
+
+        function drawPlayers(data = [{
+                _steamId: "name",
+                _connectionStatus: 1,
+                _player: { name: "unknown", thumbnail: "url", class: "runner", profile: "https://steamcommunity.com/id/"}
+            }]){
+            for (let i = 0; i < data.connected.length; i++) {
+                const s = data.connected[i];
+                if (s === null) continue;
+                const player = template.cloneNode(true);
+                template.parentElement.appendChild(player);
+                player.id = s._steamId;
+                player.querySelector(".name").innerHTML = s._player.name;
+                player.querySelector(".class").innerHTML = s._player.class;
+                player.querySelector(".thumb").style.backgroundImage = "url('"+s._player.thumbnail+"')";
+                player.querySelector(".thumb").href = s._player.profile;
+                player.querySelector(".status").innerHTML = "Online";
+                player.querySelector(".status").classList.add("text-green-500");
+                player.style.display = "flex";
+            }
+            for (let i = 0; i < data.disconnected.length; i++) {
+                const s = data.disconnected[i];
+                if (s === null) continue;
+                const player = template.cloneNode(true);
+                template.parentElement.appendChild(player);
+                player.id = s._steamId;
+                player.querySelector(".name").innerHTML = s._player.name;
+                player.querySelector(".class").innerHTML = s._player.class;
+                player.querySelector(".thumb").style.backgroundImage = "url('"+s._player.thumbnail+"')";
+                player.querySelector(".thumb").href = s._player.profile;
+                player.querySelector(".status").innerHTML = "Offline";
+                player.querySelector(".status").classList.add("text-red-500");
+                player.style.display = "flex";
+            }
+        }
+    </script>
+
+</body>
+
+</html>
